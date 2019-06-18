@@ -1,0 +1,36 @@
+Composant 1
+	nom	: FenP
+	type	: Fenêtre
+	Props	: Postition, Visible, Xpos, Ypos
+	Events	: ClickBtFerm, ClickBtRed, ClickBtArg, ClickTitre
+
+Composant 2
+	nom	: MenuH
+	type	: Menu
+	Props	: ItemChoisi, Actif, Visible
+	Events	: Click( item )
+
+Composant 3
+	nom	: Commande
+	type	: Menu
+	Props	: Option, Deployer
+	Events	: Click( item ), EntrerKeyPress( item )
+
+Composant 4
+	nom	: Plan
+	type	: Caneva
+	Props	: NbreObjet, ListObjet, Actif
+	Events	: Click, Drag
+
+Composant 5
+	nom	: BtProjection
+	type	: Bouton
+	Props	: Etat
+	Events	: Click
+
+Composant 6
+	nom	: BtDistance
+	type	: Bouton
+	Props	: Etat
+	Events	: Click
+

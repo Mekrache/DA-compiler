@@ -1,0 +1,567 @@
+//Creer par MEKRACHE Abdelkader 2cssiq4
+//Header 
+PARSER_BEGIN(AFComposer)
+
+import java.util.*;
+import java.io.*;
+
+class AFComposer {
+
+	public static ArrayList<ArrayList<String>> Automate = new ArrayList<ArrayList<String>>() ;
+	public static ArrayList<ArrayList<String>> newAutomate = new ArrayList<ArrayList<String>>() ;
+	
+	public static int ids = 1, idEv = 1, idComp = 1;
+
+	public static ArrayList<Integer> id_root;
+
+	public static void genererComposants ( String id,String type, ArrayList<String> prop, ArrayList<String> event ){
+		System.out.printf("Composant %d\n", idComp++);
+		System.out.printf("\tnom\t: %s\n",id);
+		System.out.printf("\ttype\t: %s\n",type);
+		System.out.printf("\tProps\t: ");
+		boolean b = true;
+		for (String p : prop){
+			StringTokenizer Tok = new StringTokenizer(p);
+		 	while (Tok.hasMoreElements()) {
+				String t = Tok.nextToken();
+			       	if (b) { b=false; System.out.printf("%s",t); } 
+				else { System.out.printf(", %s",t); }
+			}	 
+		}
+		System.out.printf("\n\tEvents\t: ");
+		b = true;
+		for (String e : event){
+			if (b) { b=false; System.out.printf("%s",e); } 
+			else { System.out.printf(", %s",e); }
+		}	 
+		System.out.printf("\n\n");
+	}
+
+	public static ArrayList<Integer> MergerSequence(ArrayList<Integer> indiceG, ArrayList<Integer> indiceD){
+
+		ArrayList<Integer> result = new ArrayList<Integer>();
+		for (int j : indiceD){
+			ArrayList<String> tabDroite = Automate.get(j);
+			tabDroite.remove(0);
+			for ( int i : indiceG )	
+			{
+				ArrayList<String> newLigne = new ArrayList<String>() ;
+				ArrayList<String> tabGauche = Automate.get(i);
+				newLigne.addAll(tabGauche);
+				newLigne.addAll(tabDroite);
+				Automate.add(newLigne);
+				result.add(Automate.size()-1);
+			}
+		}
+		
+		for (int j : indiceD){
+			ArrayList<String> tabDroite = Automate.get(j);
+			tabDroite.set(0, "0"); 
+		}
+		
+		for ( int i : indiceG )	
+		{
+			ArrayList<String> tabGauche = Automate.get(i);
+			tabGauche.set(0, "0");
+		}
+		
+		return result;
+	}
+
+	public static ArrayList<Integer> MergerAlternative(ArrayList<Integer> indiceG, ArrayList<Integer> indiceD){
+
+		ArrayList<String> tabGauche = Automate.get(indiceG.get(0));
+
+		for (int j : indiceD){
+			ArrayList<String> tabDroite = Automate.get(j);
+			tabDroite.set(0, tabGauche.get(0));
+	
+		}
+		indiceG.addAll(indiceD);
+		return indiceG;
+	}
+
+	public static ArrayList<Integer>  MergerChoix(ArrayList<Integer> indiceG, ArrayList<Integer> indiceD){
+
+		ArrayList<String> tabGauche = Automate.get(indiceG.get(0));
+		String debut = tabGauche.get(0);
+		String fin = tabGauche.get(tabGauche.size()-1);
+
+		for (int j : indiceD){
+			ArrayList<String> tabDroite = Automate.get(j);
+			tabDroite.set(0, debut);
+			tabDroite.set(tabDroite.size()-1, fin);
+		}
+
+		for (int i : indiceG){
+			tabGauche = Automate.get(i);
+			tabGauche.set(0, debut);
+			tabGauche.set(tabGauche.size()-1, fin);
+		}
+		
+		indiceG.addAll(indiceD);
+		return indiceG;
+	}
+
+	public static void enleverRed(){
+		for ( int i=0; i < Automate.size() ;i++)
+		{
+			if ( Integer.parseInt(Automate.get(i).get(0)) == 0 ) {Automate.remove(i); i--;}
+		}
+	}
+
+	public static void AfficherChemins(){
+		enleverRed();
+		for( ArrayList<String> ligne : Automate ){
+				for ( String ch : ligne ){
+					System.out.printf("%s - ",ch);
+				}
+				System.out.printf("\n");
+		}
+	}
+
+	public static void creerAutomate(){
+		recupererEtats();
+		for ( int i=0; i<newAutomate.size();i++){
+			remplireEtat(i);
+			enleverRedondance(i);
+		}
+		
+	}
+
+	public static void afficherAutomate(){
+		System.out.printf("Etats\t\tClick\t\tDoubleClick\tChrKeyPress\tNumKeyPress\tEntrerKeyPress\tDrag\t\tDrop\n");
+		for ( ArrayList<String> Ligne : newAutomate ){
+			for( String Case : Ligne ){
+				System.out.printf("%s\t\t",Case);
+			}
+			System.out.printf("\n");
+		}
+	}
+	
+
+	public static void recupererEtats(){
+		enleverRed();
+
+
+		//ArrayList<ArrayList<String>> newAutomate = new ArrayList<ArrayList<String>>() ;
+		ArrayList<String> etats = new ArrayList<String>() ;
+		ArrayList<String> newLigne ;
+
+		for( ArrayList<String> ligne : Automate ){
+			for (  int i=0; i < ligne.size() ;i++ ){
+				if (i%2 == 0) {
+					if ( !app(etats,ligne.get(i)) ) etats.add(ligne.get(i));
+				}
+			}
+		}
+		for ( String e : etats ) { 
+			newLigne = new ArrayList<String>() ;
+			newLigne.add(e);
+			for (int i=0;i<7;i++) newLigne.add("-");
+			newAutomate.add(newLigne);
+		 }
+	}
+
+	public static boolean app( ArrayList<String> etats, String etat ){
+		for(String e : etats){
+			if ( e.equals(etat) ) return true;
+		}
+		return false;
+	} 
+
+	public static void remplireEtat (int indice){
+		
+		String etat = newAutomate.get(indice).get(0);
+		ArrayList<String> seed = new ArrayList<String>() ;
+	 	seed.add("DoubleClick"); seed.add("Click");  seed.add("ChrKeyPress");
+		seed.add("NumKeyPress"); seed.add("EntrerKeyPress"); seed.add("Drag"); seed.add("Drop");
+		String space = " ";
+
+		for( ArrayList<String> ligne : Automate ){
+			for (  int i=0; i < ligne.size() ;i++ ){
+				if (i%2 == 0) {
+					if ( etat.equals(ligne.get(i)) && i != ligne.size()-1 )
+					{
+						for (String key : seed){
+
+							if ( key.equals("DoubleClick") && ligne.get(i+1).indexOf(key) != -1 ){
+								String e = newAutomate.get(indice).get(2);
+								if ( e.equals("-") )
+									newAutomate.get(indice).set(2,ligne.get(i+2)); 
+								else 
+									newAutomate.get(indice).set(2,e+space+ligne.get(i+2));	
+								break;
+							}
+
+							if (key.equals("DoubleClick") && ligne.get(i+1).indexOf("DbClick")!=-1){
+								String e = newAutomate.get(indice).get(2);
+								if ( e.equals("-") )
+									newAutomate.get(indice).set(2,ligne.get(i+2)); 
+								else 
+									newAutomate.get(indice).set(2,e+space+ligne.get(i+2));	
+								break;
+							}
+							
+							if ( key.equals("Click") && ligne.get(i+1).indexOf(key) != -1 ){
+								String e = newAutomate.get(indice).get(1);
+								if ( e.equals("-") )	
+									newAutomate.get(indice).set(1,ligne.get(i+2)); 	
+								else 
+									newAutomate.get(indice).set(1,e+space+ligne.get(i+2));	
+								break;
+							}
+
+							if ( key.equals("ChrKeyPress") && ligne.get(i+1).indexOf(key) != -1 ){
+								String e = newAutomate.get(indice).get(3);
+								if ( e.equals("-") )	
+									newAutomate.get(indice).set(3,ligne.get(i+2)); 	
+								else 
+									newAutomate.get(indice).set(3,e+space+ligne.get(i+2));	
+								break;
+							}
+
+							if ( key.equals("NumKeyPress") && ligne.get(i+1).indexOf(key) != -1 ){
+								String e = newAutomate.get(indice).get(4);
+								if ( e.equals("-") )	
+									newAutomate.get(indice).set(4,ligne.get(i+2)); 	
+								else 
+									newAutomate.get(indice).set(4,e+space+ligne.get(i+2));	
+								break;
+							}
+
+							if ( key.equals("EntrerKeyPress") && ligne.get(i+1).indexOf(key) != -1 ){
+								String e = newAutomate.get(indice).get(5);
+								if ( e.equals("-") )	
+									newAutomate.get(indice).set(5,ligne.get(i+2)); 	
+								else 
+									newAutomate.get(indice).set(5,e+space+ligne.get(i+2));	
+								break;
+							}
+
+							if ( key.equals("Drag") && ligne.get(i+1).indexOf(key) != -1 ){
+								String e = newAutomate.get(indice).get(6);
+								if ( e.equals("-") )	
+									newAutomate.get(indice).set(6,ligne.get(i+2)); 	
+								else 
+									newAutomate.get(indice).set(6,e+space+ligne.get(i+2));	
+								break;
+							}
+
+							if ( key.equals("Drop") && ligne.get(i+1).indexOf(key) != -1 ){
+								String e = newAutomate.get(indice).get(7);
+								if ( e.equals("-") )	
+									newAutomate.get(indice).set(7,ligne.get(i+2)); 	
+								else 
+									newAutomate.get(indice).set(7,e+space+ligne.get(i+2));	
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+		
+	}
+
+	public static void enleverRedondance(int indice){
+		ArrayList<String> Ligne = newAutomate.get(indice);
+		String space=" ";
+		ArrayList<String> newCase;
+		String nc = "-" ;
+		
+		for (int i=0; i<Ligne.size(); i++){
+			String Case = Ligne.get(i);
+			newCase = new ArrayList<String>() ;
+			if (!Case.equals("-") && i!=0 ){
+				StringTokenizer Tok = new StringTokenizer(Case);
+		 		while (Tok.hasMoreElements()) {
+					String t = Tok.nextToken();
+			      	  	if (!app(newCase,t)) newCase.add(t); 
+				}
+				for (String c : newCase){
+					if ( nc.equals("-") ) nc = c;
+					else nc = nc+space+c;
+				}
+				newAutomate.get(indice).set(i,nc);
+			}
+		}
+	}
+
+	public static void main( String[] args ) throws ParseException, TokenMgrError {
+
+		try{
+			
+			System.out.printf("Donner le nom du fichier contenant le programme : ");
+			Scanner sc = new Scanner(System.in);
+			String nomFichier = sc.nextLine();
+			FileReader input = new FileReader(nomFichier);
+			AFComposer parser = new AFComposer( input ) ;
+
+			PrintStream defalut = System.out;
+
+			PrintStream Composants = new PrintStream("Composants.gui");
+
+			PrintStream Automate = new PrintStream("Automate.aef");
+			
+			System.setOut(Composants);
+
+			try {
+				parser.Start() ;
+			}catch (ParseException m) {
+				System.setOut(defalut);
+				System.out.printf("dwqd %s\n",m);
+			}
+
+			System.setOut(Automate);
+
+			creerAutomate();
+			afficherAutomate();
+
+			System.setOut(defalut);
+			System.out.printf("Fichier Automate.aef et Composants.gui sont crées\n");
+
+		}catch (Exception ex){
+			System.out.printf("%s\n",ex);
+		}
+
+		
+
+	}
+
+}
+PARSER_END(AFComposer)
+
+//Tokens
+SKIP : 
+{
+	" "
+|	"\n"
+|	"\r" 
+|	"\t"
+}
+TOKEN : 
+{	< Debut : "DEBUT" >	
+|	< Interface : "INTERFACE" >
+|	< Comp : "COMP">
+|	< Prop : "PROP" >
+|	< Event : "EVET" | "EVT" >
+|	< Define : "INV" >
+|	< Initialisations : "INITIALISATIONS" >
+|	< Actions : "ACTIONS" >
+|	< Fin : "FIN" >  
+|	< If : "if" | "If" >
+|	< Then : "then" | "Then" >
+|	< TypeComp :      "Fenêtre" 
+			| "Menu" 
+			| "BoiteDialogue" 
+			| "Panel" 
+			| "ChampsTexte" 
+			| "ComboBox" 
+			| "ListeDéroulante" 
+			| "CaseACochet" 
+			| "BoutonRadio" 
+			| "Icône" 
+			| "Caneva" 
+			| "Bouton" >
+|	< TypeAtt :       "int" 
+			| "float"
+			| "double"
+			| "float" 
+			| "boolean" 
+			| "Boolean"
+			| "Bool" 
+			| "bool" >
+|	< EventId :       "Click" 
+			| "DoubleClick"
+			| "DbClick"
+			| "ChrKeyPress"
+			| "NumKeyPress"
+			| "EntrerKeyPress"
+			| "Drag"
+			| "Drop" 
+			| "ClickBtFerm"
+			| "ClickBtRed"
+			| "ClickBtArg"
+			| "ClickTitre"
+			| "ClickBtArgd" >
+|	< Valeur : (<Chiffre>)+ >
+|	< Bool : "True" | "False" >
+|	< Seq : "And" | "and" | "Or" | "or" > 
+|	< Identifiant : (<LettreMin>|<LettreMaj>)+ >
+|	< Comparaison : "=" | "<>" >
+|	< Cote : "'" >
+|	< Plus : "+" >
+|	< Moins : "-" >
+|	< ParO : "(" >
+|	< ParF : ")" >
+|	< AcoO : "{" >
+|	< AcoF : "}" >
+|	< Virg : "," >
+|	< PointVirg : ";">
+|	< Dpts : ":" >
+|	< DDpts : "::" >
+|	< Recoit : ":=" >
+|	< Til : "~" >
+|	< Point : "." >
+|	< #Chiffre : ["0"-"9"] >
+|	< #LettreMaj : ["A"-"Z"] >
+|	< #LettreMin : ["a"-"z"] > 
+}
+
+//Grammar
+void Start() :
+{}
+{
+	<Debut>
+	<Interface> (Composant())*
+	<Initialisations> (Init())*
+	<Actions> id_root=Action()
+	<Fin>
+}
+
+//Composant
+void Composant() :
+{
+	Token id; 
+	Token type;
+	ArrayList<String> prop;
+	ArrayList<String> event;
+}
+{
+	<Comp> id=<Identifiant> <Dpts> type=<TypeComp> ( <ParO> <Identifiant>  <ParF> )? (<PointVirg>)?
+	prop=Propriete() event=Evenement() { genererComposants(id.image, type.image, prop, event); }      
+}
+
+ArrayList<String> Propriete() :
+{
+	ArrayList<String> prop = new ArrayList<String>();
+	String p;
+}
+{
+	<Prop> ( p=P() { prop.add(p); } )* {return prop;} 
+}
+
+String P() : 
+{
+	String p = ""; 
+	Token id;
+}
+{
+	id=<Identifiant> { p = p+" "+id.image; } 
+	( <Virg> id=<Identifiant> { p = p+" "+id.image; }  )*  <Dpts>
+	( <TypeAtt> | <AcoO> <Identifiant> ( <Virg> <Identifiant> )* <AcoF> ) (<PointVirg>)? {return p;}
+}
+
+ArrayList<String> Evenement() :
+{
+	ArrayList<String> event = new ArrayList<String>();
+	String e;
+}
+{
+	<Event> ( e=E() { event.add(e); } )*
+	{ return event; }
+}
+
+String E() : 
+{
+	String e;
+	Token eid;
+	Token id;
+}
+{	
+	eid=<EventId> { e=eid.image; }
+	( <ParO> id=<Identifiant> <ParF> { e=e+"( "+id.image+" )"; })? 
+	<AcoO> Expr() <AcoF>	
+	{ return e; }
+}
+
+void Expr() : 
+{}
+{
+	<If> Cond() <Then> Operation() ( (<PointVirg>|<Seq>) Operation() )* 
+}
+
+void Cond() : 
+{}
+{
+	<Identifiant> <Comparaison> (<Valeur>|<Identifiant>|<Bool>) 
+}
+
+void Operation() : 
+{}
+{
+	<Identifiant> ( <Point> <Identifiant> )? ( Affect() | Incr() )
+}
+
+void Affect() : 
+{}
+{
+	<Recoit> ( Tg() | <Bool> | <Valeur> )
+}
+
+void Tg() :
+{}
+{
+	<Identifiant> ( Op() <Cote> <Identifiant> <Cote> )?
+}
+
+void Incr() : 
+{}
+{
+	Op() <Valeur>
+}
+
+void Op() :
+{}
+{
+	<Plus> | <Moins>
+}
+
+
+//Initialisation
+void Init() : 
+{}
+{
+	<Identifiant> <DDpts> <Identifiant> <Recoit> ( <Valeur> | <Identifiant> | <Bool>) <PointVirg> 
+}
+
+//Actions
+ArrayList<Integer> Action() : 
+{
+	ArrayList<Integer> indiceG;
+	ArrayList<Integer> id;
+}
+{
+	indiceG=A() 	{ id = indiceG ; }	
+	[ id = B(indiceG) ] 	{ return id; }
+}
+
+ArrayList<Integer> A() :
+{
+	Token action;
+	ArrayList<String> tabAction = new ArrayList<String>() ;
+	ArrayList<Integer> result = new ArrayList<Integer>() ;
+	ArrayList<Integer> id ;
+}
+{
+	action=<EventId> <ParO> <Identifiant> <ParF> { 	tabAction.add( Integer.toString(ids++) );
+							tabAction.add( action.image+Integer.toString(idEv++) );
+							tabAction.add( Integer.toString(ids++) );
+							Automate.add( tabAction ) ;
+							result.add(Automate.size()-1); 
+							return result;
+						      }
+|	<AcoO> id=Action() <AcoF>  { return id;}
+}
+
+ArrayList<Integer> B (ArrayList<Integer> indiceG) : 
+{
+	ArrayList<Integer> indiceD;
+}
+{
+	<PointVirg>  indiceD=Action() { return MergerSequence(indiceG, indiceD);  }
+|	<Til> 	indiceD=Action()  { return MergerChoix(indiceG, indiceD); }
+|	<Plus> indiceD=Action() { return MergerAlternative(indiceG, indiceD); }
+}
+	

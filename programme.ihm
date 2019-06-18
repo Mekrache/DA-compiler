@@ -1,0 +1,105 @@
+DEBUT
+
+
+INTERFACE
+
+COMP FenP : Fenêtre ;
+  PROP
+    Postition : {Agrd, Red };
+    Visible : Boolean;
+    Xpos, Ypos : int;
+  EVT
+    ClickBtFerm { if Position<>Ferm then Position := Ferm }
+    ClickBtRed { if Position=Agrd then Position := Red }
+    ClickBtArg { if Position=Red then Position := Agrd }
+    ClickTitre { if Visible=False then Visible := True}
+
+
+COMP MenuH : Menu (FenP)
+  PROP 
+    ItemChoisi : {Fichier, Commande, Designation, Information, Calcul, Option};
+    Actif, Visible : Bool;
+  EVT 
+    Click(item) {if Actif=True then ItemChoisi := item and itemdeployer := True}
+
+
+COMP Commande : Menu (MenuH) ;
+  PROP 
+    Option : {Projection, Distance};
+    Deployer : Bool;
+  EVET 
+    Click (item) {if Deployer = True Then Option := Item }
+    EntrerKeyPress (item) {if Deployer = True then item.deployer := Item }
+
+
+COMP Plan : Caneva (FenP)
+  PROP 
+    NbreObjet : int ;
+    ListObjet : {Aucun, Cercle, Point, Segment, Rectongle} ;
+    Actif : bool;
+  EVET 
+    Click {If Actif = True Then NbreObjet +1 ; ListObjet := ListObjet + 'Point' and Nb +1 or Nb - 1}
+    Drag {If Actif = True Then ListObjet := ListObjet + 'Segment'; NbreObjet + 1}
+
+
+COMP BtProjection : Bouton (FenP)
+  PROP 
+    Etat : {Actif, Enfoncer};
+  EVT 
+    Click { If Etat = Actif Then Etat := Enfoncer } 
+
+
+COMP BtDistance : Bouton (FenP)
+  PROP 
+    Etat : {Actif, Enfoncer} ;
+  EVT 
+    Click { If Etat = Actif Then Etat := Enfoncer } 
+
+
+
+
+INITIALISATIONS 
+  FenP::Position := Agrd;		MenuH::Actif := False ;
+  FenP::Visible := True;		MenuH::Visible := True;
+  FenP::Xpos := 10;			Plan::NbreObjet := 0;
+  FenP::Ypos := 10;			Plan::Actif := True;
+  Commande::Option := Projection; 	Plan::ListObjet := Aucun;
+  Commande::Deloyer := False;		BtProjection::Etat := Actif;
+  MenuH::ItemChoisi := Fichier;		BtDistance::Etat := Actif;
+
+
+
+
+ACTIONS
+{
+	Click(Plan) ;
+	Drag(Plan)
+} ;
+{
+	{
+		DbClick(Plan);
+		{
+			Click(BrPeojection) ~
+			{
+				Click(Coma) ;
+				Click(Projection) 
+			}
+		}
+	} +
+	{
+		DbClick(Plan);
+		DoubleClick(Plan);
+		{
+			Click(BtDistance) ~
+			{
+				Click(Commande) ;
+				Click(Distance)
+			}
+		}
+	}
+}
+
+
+
+
+FIN
